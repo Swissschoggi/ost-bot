@@ -5,6 +5,9 @@ from discord.ext import commands, tasks
 from discord import app_commands
 import datetime
 from discord.ui import Button, View
+import json
+
+#I AM NOT GOOD AT CODING, THIS WAS DONE WITH HELP AND IS STILL A WORK IN PROGRESS, if you have suggestions hmu on discord @fynninyoass
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -93,6 +96,17 @@ embed_anleitung.set_footer(
     text="Diese Anleitung dient nur der Information. Verbindliche Regelungen findest du in den offiziellen OST Dokumenten."
 )
 
+def load_module_data():
+    with open('data/modules.json', 'r', encoding='utf-8') as f:
+        modules = json.load(f)
+    with open('data21/categories.json', 'r', encoding='utf-8') as f:
+        categories = json.load(f)
+    with open('data21/focuses.json', 'r', encoding='utf-8') as f:
+        focuses = json.load(f)
+    return modules, categories, focuses
+
+all_modules, all_categories, all_focuses = load_module_data()
+
 class FAQView(View):
     def __init__(self):
         super().__init__(timeout=60)
@@ -110,19 +124,31 @@ async def faq(interaction: discord.Interaction):
     embed = discord.Embed(title="Häufige Fragen (FAQ)", description="Wähle ein Thema:", color=0x7289DA)
     await interaction.response.send_message(embed=embed, view=FAQView(), ephemeral=True)
 
-#Modulerinnerung
-class AnmeldungReminder(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.deadlines = {
-            "Modulwahl (Phase 1)": datetime.date(2026, 4, 13),
-            "Stundenplan (Phase 2)": datetime.date(2026, 6, 22),
-            "Anmeldebereinigung (Phase 3)": datetime.date(2026, 2, 16)
-        }
-        self.reminder_days = [7, 3, 1] 
-        self.check_reminders.start()
-
-        channel = self.bot.get_channel(1450413184677707828)
+@bot.tree.command(name="modul_suche", description="Suche nach einem Modul")
+@app_commands.describe(modulname="Name oder Kürzel des Moduls")
+async def modul_suche(interaction: discord.Interaction, modulname: str):
+    modulname_lower = modulname.lower()
+    results = []
+    
+    for module in all_modules:
+        if (modulname_lower in module['name'].lower() or 
+            modulname_lower in module['id'].lower() or
+            modulname_lower in module.get('kuerzel', '').lower()):
+            results.append(module)
+    
+    module = results[0]
+    
+    embed = discord.Embed(
+        title=f"{module['name']} ({module['id']})",
+        description=module.get('description'),
+        color=discord.Color.blue(),
+        url=f"https://studien.ost.ch/{module.get('url', '')}"
+    )
+    embed.add_field(name="ECTS", value=str(module['ects']), inline=True)
+    embed.add_field(name="Semester", value=module['term'], inline=True)
+    embed.add_field(name="Voraussetzung", value=module['predecessorModuleId'], inline=True)
+    embed.add_field(name="Folgemodul", value=module['successorModuleId'], inline=True)
+    await interaction.response.send_message(embed=embed)
     
 @bot.tree.command(name="quote", description="Zitiere einen Prof")
 @app_commands.describe(
