@@ -187,7 +187,9 @@ async def modul_suche(interaction: discord.Interaction, modulname: str):
                 embed.add_field(name="Empfohlene Module", value=rec_text, inline=False)
             
             await interaction.response.send_message(embed=embed)
-    
+    else:
+        await interaction.response.send_message("couldn't find module")
+        
 @bot.tree.command(name="quote", description="Zitiere einen Prof")
 @app_commands.describe(
     quote="The quote text",
