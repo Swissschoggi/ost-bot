@@ -1,0 +1,9 @@
+version: "3"
+services:
+  bot:
+    build: /srv/ost-bot
+    volumes:
+      - /srv/ost-bot:/app
+    working_dir: /app
+    env_file: /srv/ost-bot/.env
+    command: python ost-bot.py

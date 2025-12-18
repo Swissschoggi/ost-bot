@@ -7,7 +7,7 @@ import datetime
 from discord.ui import Button, View
 import json
 
-#I AM NOT GOOD AT CODING, THIS WAS DONE WITH HELP AND IS STILL A WORK IN PROGRESS, if you have suggestions hmu on discord @fynninyoass
+#I AM NOT GOOD AT CODING, THIS WAS DONE WITH AI HELP AND IS STILL A WORK IN PROGRESS, if you have suggestions hmu on discord @fynninyoass
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -24,7 +24,7 @@ embed = discord.Embed(
     color=discord.Color.purple()
 )
 embed.add_field(
-    name="Main Platform",
+    name="Lost university",
     value="[LOST.University](https://lost.university)\n Plan your Semester",
     inline=False
 )
@@ -56,6 +56,11 @@ embed.add_field(
 embed.add_field(
     name="Wohnungsbörse",
     value="[Wohnungsbörse](https://www.ost.ch/de/die-ost/campus/campus-rapperswil-jona/wohnen/wohnungsboerse)",
+    inline=False
+)
+embed.add_field(
+    name="Tutorat",
+    value="Ihr bekommt ein Mail im ersten Semester mit Informationen zum Tutorat",
     inline=False
 )
 embed.set_footer(text="OST Bot • Your study assistant")
@@ -97,11 +102,11 @@ embed_anleitung.set_footer(
 )
 
 def load_module_data():
-    with open('data/modules.json', 'r', encoding='utf-8') as f:
+    with open("data/modules.json", "r", encoding="utf-8") as f:
         modules = json.load(f)
-    with open('data21/categories.json', 'r', encoding='utf-8') as f:
+    with open("data21/categories.json", "r", encoding="utf-8") as f:
         categories = json.load(f)
-    with open('data21/focuses.json', 'r', encoding='utf-8') as f:
+    with open("data21/focuses.json", "r", encoding="utf-8") as f:
         focuses = json.load(f)
     return modules, categories, focuses
 
@@ -131,24 +136,54 @@ async def modul_suche(interaction: discord.Interaction, modulname: str):
     results = []
     
     for module in all_modules:
-        if (modulname_lower in module['name'].lower() or 
-            modulname_lower in module['id'].lower() or
-            modulname_lower in module.get('kuerzel', '').lower()):
-            results.append(module)
-    
-    module = results[0]
-    
-    embed = discord.Embed(
-        title=f"{module['name']} ({module['id']})",
-        description=module.get('description'),
-        color=discord.Color.blue(),
-        url=f"https://studien.ost.ch/{module.get('url', '')}"
-    )
-    embed.add_field(name="ECTS", value=str(module['ects']), inline=True)
-    embed.add_field(name="Semester", value=module['term'], inline=True)
-    embed.add_field(name="Voraussetzung", value=module['predecessorModuleId'], inline=True)
-    embed.add_field(name="Folgemodul", value=module['successorModuleId'], inline=True)
-    await interaction.response.send_message(embed=embed)
+        if modulname_lower in module["name"].lower() or modulname_lower == module["id"].lower():
+            
+            embed = discord.Embed(
+                title=f"{module['name']} ({module['id']})",
+                color=discord.Color.blue(),
+                url=f"https://studien.ost.ch/{module['url']}"
+            )
+            
+            embed.add_field(name="ECTS", value=str(module["ects"]), inline=True)
+            embed.add_field(name="Semester", value=module["term"], inline=True)
+            
+            if module["predecessorModuleId"]:
+                embed.add_field(name="Voraussetzung", value=module["predecessorModuleId"], inline=True)
+            
+            if module["successorModuleId"]:
+                embed.add_field(name="Folgemodul", value=module["successorModuleId"], inline=True)
+            
+            if module["isMandatory"]:
+                embed.add_field(name="Status", value="Pflichtmodul", inline=True)
+            
+            if module["isDeactivated"]:
+                embed.add_field(name="Status", value="Deaktiviert", inline=True)
+            
+            module_categories = []
+            for category in all_categories:
+                for mod in category["modules"]:
+                    if mod["id"] == module["id"]:
+                        module_categories.append(category["name"])
+            
+            if module_categories:
+                embed.add_field(name="Kategorien", value=", ".join(module_categories), inline=False)
+            
+            module_focuses = []
+            for focus in all_focuses:
+                for mod in focus["modules"]:
+                    if mod["id"] == module["id"]:
+                        module_focuses.append(focus["name"])
+            
+            if module_focuses:
+                embed.add_field(name="Schwerpunkte", value=", ".join(module_focuses), inline=False)
+            
+            if module["recommendedModuleIds"]:
+                rec_text = ", ".join(module["recommendedModuleIds"][:5])
+                if len(module["recommendedModuleIds"]) > 5:
+                    rec_text += f" (+{len(module['recommendedModuleIds']) - 5} weitere)"
+                embed.add_field(name="Empfohlene Module", value=rec_text, inline=False)
+            
+            await interaction.response.send_message(embed=embed)
     
 @bot.tree.command(name="quote", description="Zitiere einen Prof")
 @app_commands.describe(
@@ -180,7 +215,7 @@ async def professor_quote(
     
 @bot.event
 async def on_ready():
-    print(f'{bot.user} has connected to Discord!')
+    print(f"{bot.user} has connected to Discord!")
     try:
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} command(s)")
