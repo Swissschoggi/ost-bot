@@ -188,7 +188,7 @@ async def modul_suche(interaction: discord.Interaction, modulname: str):
             
             await interaction.response.send_message(embed=embed)
     else:
-        await interaction.response.send_message("couldn't find module")
+        await interaction.response.send_message("couldn't find module or module is no longer served")
         
 @bot.tree.command(name="quote", description="Zitiere einen Prof")
 @app_commands.describe(
