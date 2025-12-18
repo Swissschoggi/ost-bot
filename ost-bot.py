@@ -3,12 +3,15 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-import datetime
+from datetime import date, datetime
 from discord.ui import Button, View
 import json
+from discord.app_commands.translator import TranslationContextTypes, locale_str
+from discord.enums import Locale
+
 
 #I AM NOT GOOD AT CODING, THIS WAS DONE WITH AI HELP AND IS STILL A WORK IN PROGRESS, if you have suggestions hmu on discord @fynninyoass
-
+        
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -190,27 +193,27 @@ async def modul_suche(interaction: discord.Interaction, modulname: str):
     quote="The quote text",
     professor="Professor's name",
     course="Related course (optional)",
+    date="enter the date this was said"
 )
 async def professor_quote(
     interaction: discord.Interaction,
     quote: str,
     professor: str,
     course: str = None,
+    date: str = None
 ):
     embed = discord.Embed(
     title="💬 Professor's Wisdom",
     description=f"\"{quote}\"",
-    color=discord.Color.dark_blue(),
-    timestamp=datetime.datetime.now()
+    color=discord.Color.purple(),
     )
 
     zitat_channel = bot.get_channel(1450446958257897555)
     
     if course:
         embed.add_field(name="Course", value=course, inline=True)
-
-        message_content = f"**The Professor said!**"
-        message_content += f"\nProfessor **{professor}**"
+        message_content = f"Professor **{professor}**"
+        embed.set_footer(text=date)
         await zitat_channel.send(content=message_content, embed=embed)    
     
 @bot.event
